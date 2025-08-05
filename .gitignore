@@ -1,0 +1,65 @@
+===== Visual Studio (User-specific & temp files) =====
+
+.vs/
+*.user
+*.suo
+*.rsuser
+*.userosscache
+*.sln.docstates
+
+===== Build outputs =====
+
+[Bb]in/
+[Oo]bj/
+*.dll
+*.exe
+
+===== Web & config =====
+
+.Publish.xml
+*.dbmdl
+*.bak
+*.cache
+*.log
+
+===== Source Control bindings (TFS, etc.) =====
+
+.vspscc
+*.vssscc
+
+===== NuGet =====
+
+.nupkg
+packages/
+project.lock.json
+project.fragment.lock.json
+artifacts/
+
+===== Entity Framework (EF Core/EF6) =====
+
+# 若有使用 Code First 建議保留 Migrations 資料夾，不應忽略
+
+# migrations/
+
+===== Local SQL Server DB files =====
+
+.mdf
+*.ldf
+
+===== Resharper / Rider / JetBrains tools =====
+
+_ReSharper*/
+*.DotSettings.user
+
+===== Merge conflict files =====
+
+.orig
+
+===== Windows system files =====
+
+Thumbs.db
+ehthumbs.db
+
+===== [ASP.NET] MVC / Scaffolding readme =====
+
+ScaffoldingReadMe.txt
