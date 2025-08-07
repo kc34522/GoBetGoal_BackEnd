@@ -45,6 +45,7 @@ artifacts/
 
 .mdf
 *.ldf
+Connect.config
 
 ===== Resharper / Rider / JetBrains tools =====
 
