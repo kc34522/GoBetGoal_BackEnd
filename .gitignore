@@ -22,6 +22,12 @@
 *.cache
 *.log
 
+===== Secret config files =====
+
+TokenKey.config
+Connect.config
+
+
 ===== Source Control bindings (TFS, etc.) =====
 
 .vspscc
@@ -45,7 +51,6 @@ artifacts/
 
 .mdf
 *.ldf
-Connect.config
 
 ===== Resharper / Rider / JetBrains tools =====
 

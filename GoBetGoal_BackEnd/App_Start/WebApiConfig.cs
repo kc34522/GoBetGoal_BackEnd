@@ -11,6 +11,8 @@ namespace GoBetGoal_BackEnd
         {
             // Web API 設定和服務
 
+            
+
             // Web API 路由
             config.MapHttpAttributeRoutes();
 
