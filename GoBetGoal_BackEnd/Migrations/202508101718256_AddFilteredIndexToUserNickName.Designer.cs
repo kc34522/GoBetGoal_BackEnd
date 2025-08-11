@@ -7,13 +7,13 @@ namespace GoBetGoal_BackEnd.Migrations
     using System.Resources;
     
     [GeneratedCode("EntityFramework.Migrations", "6.5.1")]
-    public sealed partial class AdjustUserModel : IMigrationMetadata
+    public sealed partial class AddFilteredIndexToUserNickName : IMigrationMetadata
     {
-        private readonly ResourceManager Resources = new ResourceManager(typeof(AdjustUserModel));
+        private readonly ResourceManager Resources = new ResourceManager(typeof(AddFilteredIndexToUserNickName));
         
         string IMigrationMetadata.Id
         {
-            get { return "202508091559052_Adjust User Model"; }
+            get { return "202508101718256_AddFilteredIndexToUserNickName"; }
         }
         
         string IMigrationMetadata.Source
