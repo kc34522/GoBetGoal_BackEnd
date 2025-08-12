@@ -36,13 +36,11 @@ namespace GoBetGoal_BackEnd.Security
                 { "Exp", DateTime.UtcNow.AddMonths(3).ToString() }, // JwtToken 時效設定 
                 // --- 建議加入的標準金鑰 ---
                 { "iss", "GoBetGoalApi" }, // 發行者
-                { "aud", "GoBetGoalApi" }, // 接收者
-                { "jti", Guid.NewGuid().ToString() } // 讓每個 Token 本身都獨一無二
+                //{ "aud", "GoBetGoalApi" }, // 接收者
+                { "jti", Guid.NewGuid().ToString() }, // 讓每個 Token 本身都獨一無二
 
                 // --- 方便使用的自訂金鑰 ---
-               
-
-                
+                { "Email", user.Email}
             };
 
             ////payload作法2
@@ -67,11 +65,15 @@ namespace GoBetGoal_BackEnd.Security
             // payload 從原本 token 傳遞的資料沿用，並刷新效期
             var payload = new Dictionary<string, object>
             {
-                { "Id", (int)tokenData["Id"] },
-                { "Account", tokenData["Account"].ToString() },
-                { "NickName", tokenData["NickName"].ToString() },
-                { "Image", tokenData["Image"].ToString() },
-                { "Exp", DateTime.Now.AddMinutes(30).ToString() } // JwtToken 時效刷新設定 30 分
+                // --- 核心資料從舊 Token 沿用 ---
+                // 注意：從 Dictionary 取出的 Guid 和 Email 需要做型別轉換和檢查
+                { "Id", Guid.Parse(tokenData["Id"].ToString()) },
+                { "Email", tokenData["Account"].ToString() },
+
+                // --- 標準金鑰需要重新產生或設定 ---
+                { "iss", "GoBetGoalApi" }, // 維持發行者
+                { "jti", Guid.NewGuid().ToString() }, // *** 產生一個全新的 JTI，代表這是一個新 Token ***
+                { "Exp", DateTime.UtcNow.AddMonths(3).ToString() } // *** 設定一個全新的過期時間 ***
             };
 
             //產生刷新時效的 JwtToken
@@ -88,11 +90,12 @@ namespace GoBetGoal_BackEnd.Security
             string secretKeyNew = "RevokeToken"; // 故意用不同的 key 生成 // 不跟全域依樣
             var payload = new Dictionary<string, object>
             {
-                { "Id", 0 },
-                { "Account", "None" },
-                { "NickName", "None" },
-                { "Image", "None" },
-                { "Exp", DateTime.Now.AddDays(-15).ToString() } // 使 JwtToken 過期 失效
+                // 欄位結構與 GenerateToken 保持一致，但給予無意義或作廢的數值
+                { "Id", Guid.Empty },
+                { "Exp", DateTime.UtcNow.AddDays(-1).ToString() }, // 將過期時間設定在昨天
+                { "iss", "GoBetGoalApi" },
+                { "jti", Guid.NewGuid().ToString() },
+                { "Email", "revoked@example.com" }
             };
 
             // 產生失效的 JwtToken
@@ -107,7 +110,15 @@ namespace GoBetGoal_BackEnd.Security
         /// <returns></returns>
         public Dictionary<string, object> GetPayload(string token)
         {
-            return JWT.Decode<Dictionary<string, object>>(token, Encoding.UTF8.GetBytes(secretKey), JwsAlgorithm.HS512);
+            try
+            {
+                return JWT.Decode<Dictionary<string, object>>(token, Encoding.UTF8.GetBytes(secretKey), JwsAlgorithm.HS512);
+
+            }
+            catch
+            {
+                return null;
+            }
         }
     }
 }
