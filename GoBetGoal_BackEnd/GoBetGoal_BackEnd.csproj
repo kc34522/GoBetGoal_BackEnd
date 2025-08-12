@@ -231,6 +231,14 @@
     <Compile Include="Migrations\202508102231339_RemoveOldUserNickNameIndex.Designer.cs">
       <DependentUpon>202508102231339_RemoveOldUserNickNameIndex.cs</DependentUpon>
     </Compile>
+    <Compile Include="Migrations\202508120840369_Update Avatar Model And Fix Datetime.cs" />
+    <Compile Include="Migrations\202508120840369_Update Avatar Model And Fix Datetime.Designer.cs">
+      <DependentUpon>202508120840369_Update Avatar Model And Fix Datetime.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Migrations\202508120925072_Fix Avatar Model%281%29.cs" />
+    <Compile Include="Migrations\202508120925072_Fix Avatar Model%281%29.Designer.cs">
+      <DependentUpon>202508120925072_Fix Avatar Model%281%29.cs</DependentUpon>
+    </Compile>
     <Compile Include="Migrations\Configuration.cs" />
     <Compile Include="Models\Avatar.cs" />
     <Compile Include="Models\Context.cs" />
@@ -412,6 +420,7 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Migrations\202508091304042_Adjust Trial Template Relative Models.resx">
       <DependentUpon>202508091304042_Adjust Trial Template Relative Models.cs</DependentUpon>
+      <SubType>Designer</SubType>
     </EmbeddedResource>
     <EmbeddedResource Include="Migrations\202508101155251_UpdateUserModel2.resx">
       <DependentUpon>202508101155251_UpdateUserModel2.cs</DependentUpon>
@@ -421,6 +430,12 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Migrations\202508102231339_RemoveOldUserNickNameIndex.resx">
       <DependentUpon>202508102231339_RemoveOldUserNickNameIndex.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\202508120840369_Update Avatar Model And Fix Datetime.resx">
+      <DependentUpon>202508120840369_Update Avatar Model And Fix Datetime.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\202508120925072_Fix Avatar Model%281%29.resx">
+      <DependentUpon>202508120925072_Fix Avatar Model%281%29.cs</DependentUpon>
     </EmbeddedResource>
   </ItemGroup>
   <PropertyGroup>

@@ -18,7 +18,11 @@ namespace GoBetGoal_BackEnd.Models
         [Required]
         public int AvatarPrice { get; set; } = 0;
 
+
         public bool IsActive { get; set; } = true;
+
+        [Required]
+        public int SortOrder { get; set; } 
 
         public virtual ICollection<UserAvatar> UserAvatars { get; set; }
 

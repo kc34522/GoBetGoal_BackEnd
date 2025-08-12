@@ -67,7 +67,7 @@ namespace GoBetGoal_BackEnd.Controllers
                 {
                     UserId = newUser.Id,
                     AvatarId = avatar.Id,
-                    AcquiredAt = DateTime.UtcNow
+                    AcquiredAt = DateTime.Now
                 };
                 _db.UserAvatars.Add(newUserAvatar);
             }

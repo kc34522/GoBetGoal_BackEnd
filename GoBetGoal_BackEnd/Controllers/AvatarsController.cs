@@ -25,9 +25,10 @@ namespace GoBetGoal_BackEnd.Controllers
                 // 1. 先篩選出所有「上架中」的頭像
                 .Where(a => a.IsActive)
                 // 2. 使用 .Select() 將 Avatar 物件轉換成我們設計好的 AvatarDto
+                .OrderBy(a=>a.SortOrder)
                 .Select(a => new AvatarDto
                 {
-                    Id = a.Id,
+                    SortOrder = a.SortOrder,
                     AvatarImagePath = a.AvatarImagePath,
                     AvatarPrice = a.AvatarPrice,
                     IsLocked = a.AvatarPrice > 0,

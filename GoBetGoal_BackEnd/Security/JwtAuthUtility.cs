@@ -33,7 +33,7 @@ namespace GoBetGoal_BackEnd.Security
             {
                 // --- 必備的核心金鑰 ---
                 { "Id", user.Id },
-                { "Exp", DateTime.UtcNow.AddMonths(3).ToString() }, // JwtToken 時效設定 
+                { "Exp", DateTime.Now.AddMonths(3).ToString() }, // JwtToken 時效設定 
                 // --- 建議加入的標準金鑰 ---
                 { "iss", "GoBetGoalApi" }, // 發行者
                 //{ "aud", "GoBetGoalApi" }, // 接收者
@@ -73,7 +73,7 @@ namespace GoBetGoal_BackEnd.Security
                 // --- 標準金鑰需要重新產生或設定 ---
                 { "iss", "GoBetGoalApi" }, // 維持發行者
                 { "jti", Guid.NewGuid().ToString() }, // *** 產生一個全新的 JTI，代表這是一個新 Token ***
-                { "Exp", DateTime.UtcNow.AddMonths(3).ToString() } // *** 設定一個全新的過期時間 ***
+                { "Exp", DateTime.Now.AddMonths(3).ToString() } // *** 設定一個全新的過期時間 ***
             };
 
             //產生刷新時效的 JwtToken
@@ -92,7 +92,7 @@ namespace GoBetGoal_BackEnd.Security
             {
                 // 欄位結構與 GenerateToken 保持一致，但給予無意義或作廢的數值
                 { "Id", Guid.Empty },
-                { "Exp", DateTime.UtcNow.AddDays(-1).ToString() }, // 將過期時間設定在昨天
+                { "Exp", DateTime.Now.AddDays(-1).ToString() }, // 將過期時間設定在昨天
                 { "iss", "GoBetGoalApi" },
                 { "jti", Guid.NewGuid().ToString() },
                 { "Email", "revoked@example.com" }

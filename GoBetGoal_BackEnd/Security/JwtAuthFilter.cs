@@ -145,7 +145,7 @@ namespace GoBetGoal_BackEnd.Security
         /// <returns></returns>
         public bool IsTokenExpired(string dateTimeString)
         {
-            return Convert.ToDateTime(dateTimeString) < DateTime.UtcNow;
+            return Convert.ToDateTime(dateTimeString) < DateTime.Now;
         }
     }
 }
