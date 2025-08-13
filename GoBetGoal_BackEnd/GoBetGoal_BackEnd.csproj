@@ -200,6 +200,7 @@
     <Compile Include="Enums\ProductType.cs" />
     <Compile Include="Enums\TrialCategory.cs" />
     <Compile Include="Filters\GlobalExceptionFilter.cs" />
+    <Compile Include="Filters\ValidateModelAttribute.cs" />
     <Compile Include="Global.asax.cs">
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>
@@ -252,6 +253,7 @@
     <Compile Include="Models\Context.cs" />
     <Compile Include="Models\DTOs\AvatarDto.cs" />
     <Compile Include="Models\DTOs\ErrorResponseDto.cs" />
+    <Compile Include="Models\DTOs\LoginRequestDto.cs" />
     <Compile Include="Models\DTOs\RegisterStepOneRequestDto.cs" />
     <Compile Include="Models\DTOs\RegisterStepTwoRequestDto.cs" />
     <Compile Include="Models\DTOs\AuthSuccessResponseDto.cs" />
