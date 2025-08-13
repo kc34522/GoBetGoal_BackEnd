@@ -132,12 +132,6 @@ namespace GoBetGoal_BackEnd.Controllers
         [AllowAnonymous]
         public IHttpActionResult Login(LoginRequestDto model)
         {
-
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
             var lowerCaseEmail = model.Email.ToLowerInvariant();
 
             User user = _db.Users.FirstOrDefault(a => a.Email == lowerCaseEmail);
