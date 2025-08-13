@@ -107,7 +107,7 @@ namespace GoBetGoal_BackEnd.Controllers
                 return InternalServerError(ex);
             }
 
-         
+
 
             // 註冊成功後，立即產生 JWT，讓前端可以無縫進行下一步
             var jwtAuthUtil = new JwtAuthUtility();
@@ -121,6 +121,60 @@ namespace GoBetGoal_BackEnd.Controllers
             {
                 Message = "帳號建立成功，請繼續完善資料",
                 UserId = newUser.Id,
+                Token = token,
+                ExpiresIn = totalSeconds // 權杖有效期限 (3個月)
+
+            });
+        }
+
+        [HttpPost]
+        [Route("api/auth/login")]
+        [AllowAnonymous]
+        public IHttpActionResult Login(LoginRequestDto model)
+        {
+
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            var lowerCaseEmail = model.Email.ToLowerInvariant();
+
+            User user = _db.Users.FirstOrDefault(a => a.Email == lowerCaseEmail);
+            if (user == null)
+            {
+                var error = new ErrorResponseDto
+                {
+                    ErrorCode = "INVALID_CREDENTIALS",
+                    Message = "Email 或密碼錯誤，請檢查後重試。"
+                };
+                return Content(HttpStatusCode.Unauthorized, error);
+            }
+            else
+            {
+                bool isPasswordValid = BCrypt.Net.BCrypt.Verify(model.Password, user.PasswordHash);
+                if (!isPasswordValid)
+                {
+                    var error = new ErrorResponseDto
+                    {
+                        ErrorCode = "INVALID_CREDENTIALS",
+                        Message = "Email 或密碼錯誤，請檢查後重試。"
+                    };
+                    return Content(HttpStatusCode.Unauthorized, error);
+                }
+            }
+
+            var jwtAuthUtil = new JwtAuthUtility();
+            // 呼叫您寫好的工具來產生 Token
+            string token = jwtAuthUtil.GenerateToken(user);
+
+            // 3 個月大約的總秒數
+            long totalSeconds = (long)TimeSpan.FromDays(90).TotalSeconds;
+
+            return Ok(new AuthSuccessResponseDto
+            {
+                Message = "帳號登入成功，歡迎回來!",
+                UserId = user.Id,
                 Token = token,
                 ExpiresIn = totalSeconds // 權杖有效期限 (3個月)
 
@@ -172,7 +226,7 @@ namespace GoBetGoal_BackEnd.Controllers
 
             if (letters.Length < 2)
             {
-                return "player";
+                return "gbg";
             }
 
             int lengthToTake = Math.Min(letters.Length, 4);
