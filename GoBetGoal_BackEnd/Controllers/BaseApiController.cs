@@ -1,7 +1,9 @@
-﻿using System;
+﻿using GoBetGoal_BackEnd.Models.DTOs;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
+using System.Net.Http;
 using System.Web;
 using System.Web.Http;
 
@@ -32,8 +34,18 @@ namespace GoBetGoal_BackEnd.Controllers
                 }
             }
 
-            // 如果以上任何一個步驟失敗，就代表 Token 有問題，直接拋出 401 錯誤
-            throw new HttpResponseException(HttpStatusCode.Unauthorized);
+            // 1. 建立一個標準的錯誤回應 DTO
+            var error = new ErrorResponseDto
+            {
+                ErrorCode = "TOKEN_INVALID",
+                Message = "連線階段無效或已過期，請重新登入。"
+            };
+
+            // 2. 建立一個包含此 DTO 的 HttpResponseMessage 401
+            var response = Request.CreateResponse(HttpStatusCode.Unauthorized, error);
+
+            // 3. 拋出包含此詳細回應的例外
+            throw new HttpResponseException(response);
         }
     }
 }

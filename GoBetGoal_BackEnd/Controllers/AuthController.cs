@@ -2,6 +2,7 @@
 using GoBetGoal_BackEnd.Models.DTOs;
 using GoBetGoal_BackEnd.Security;
 using System;
+using System.Collections.Generic;
 using System.Data.Entity.Validation;
 using System.Linq;
 using System.Net;
@@ -9,11 +10,19 @@ using System.Web.Http;
 
 namespace GoBetGoal_BackEnd.Controllers
 {
+    /// <summary>
+    /// 處理所有與使用者認證相關的 API，例如註冊與登入。
+    /// </summary>
     public class AuthController : ApiController
     {
         // 準備資料庫連線
         private readonly Context _db = new Context();
 
+        /// <summary>
+        /// 註冊流程 - 步驟一：建立核心帳號
+        /// </summary>
+        /// <param name="model">使用者提供的 Email 和密碼</param>
+        /// <returns>成功後回傳包含 JWT 的物件</returns>
         [HttpPost]
         [Route("api/auth/register")]
         [AllowAnonymous] // 標示此 API 不需要登入(不需要 JWT)即可存取
@@ -34,28 +43,29 @@ namespace GoBetGoal_BackEnd.Controllers
             bool IsEmailTaken = _db.Users.Any(u => u.Email == normalizedEmail);
             if (IsEmailTaken)
             {
-                var errorResponse = new
+                var error = new ErrorResponseDto
                 {
-                    errorCode = "EMAIL_ALREADY_EXISTS",
-                    message = "此 Email 已被註冊，請嘗試使用其他 Email 或登入現有帳號。" // 是否直接改成網頁跳出來的紅色警告訊息?
+                    ErrorCode = "EMAIL_ALREADY_EXISTS",
+                    Message = "此 Email 已被註冊，請嘗試使用其他 Email 或登入現有帳號。" // 是否直接改成網頁跳出來的紅色警告訊息?
                 };
 
                 // 如果 Email 已存在，回傳 409 Conflict，並附上易於理解的錯誤訊息
-                return Content(HttpStatusCode.Conflict, errorResponse);
+                return Content(HttpStatusCode.Conflict, error);
             }
 
-            // 後端自動生成一個獨特的 PlayerId
-            string newPlayerId = Guid.NewGuid().ToString(); // 測試用 待修改 或寫進MODEL裡(如果不檢查的話)
+            // 後端自動生成一個保證唯一的 PlayerId
+            string newPlayerId = GenerateUniquePlayerId(normalizedEmail);
 
             // 建立一個新的 User 物件，準備存入資料庫
             var newUser = new User
             {
                 Email = normalizedEmail,
                 PasswordHash = BCrypt.Net.BCrypt.HashPassword(model.Password),
-                PlayerId = newPlayerId
+                PlayerId = newPlayerId,
+                UserAvatars = new List<UserAvatar>() // 初始化集合
             };
 
-            _db.Users.Add(newUser);
+            // 注意：這裡先不要 Add 到 _db，讓我們先建立好完整的物件圖 (Object Graph)
 
             // 找出所有免費的頭像
             var freeAvatars = _db.Avatars.Where(u => u.AvatarPrice == 0 && u.IsActive).ToList();
@@ -63,14 +73,18 @@ namespace GoBetGoal_BackEnd.Controllers
             // 為每一個免費頭像，建立關聯紀錄
             foreach (var avatar in freeAvatars)
             {
-                var newUserAvatar = new UserAvatar
+                newUser.UserAvatars.Add(new UserAvatar
                 {
-                    UserId = newUser.Id,
+                    // 不需要再手動設定 UserId！
+                    // User = newUser, // 也可以這樣寫，EF 都看得懂
                     AvatarId = avatar.Id,
                     AcquiredAt = DateTime.Now
-                };
-                _db.UserAvatars.Add(newUserAvatar);
+                });
+
             }
+
+            _db.Users.Add(newUser);
+
 
             try
             {
@@ -103,13 +117,66 @@ namespace GoBetGoal_BackEnd.Controllers
             // 3 個月大約的總秒數
             long totalSeconds = (long)TimeSpan.FromDays(90).TotalSeconds;
 
-            return Ok(new
+            return Ok(new AuthSuccessResponseDto
             {
-                message = "帳號建立成功，請繼續完善資料",
-                token = token,
-                expiresIn = totalSeconds // 權杖有效期限 (3個月)
+                Message = "帳號建立成功，請繼續完善資料",
+                UserId = newUser.Id,
+                Token = token,
+                ExpiresIn = totalSeconds // 權杖有效期限 (3個月)
 
             });
+        }
+
+        // --- 新增方法開始 ---
+
+        /// <summary>
+        /// 生成一個基於 Email 且保證在資料庫中唯一的 PlayerId。
+        /// </summary>
+        /// <remarks>
+        /// 長遠來看，這個方法適合放在一個獨立的 Helper/Utility 類別中，以利於程式碼重用和測試。
+        /// </remarks>
+        /// <param name="email">使用者的 Email。</param>
+        /// <returns>一個唯一的 PlayerId 字串。</returns>
+        private string GenerateUniquePlayerId(string email)
+        {
+            string newPlayerId;
+            bool isUnique;
+
+            // 提取 Email 前綴
+            string prefix = ExtractPrefixFromEmail(email);
+
+            do
+            {
+                // 生成短 GUID (前 5 個字元)
+                string shortGuid = Guid.NewGuid().ToString("N").Substring(0, 5);
+                newPlayerId = $"{prefix}_{shortGuid}";
+
+                // 檢查資料庫中此 ID 是否已存在
+                isUnique = !_db.Users.Any(u => u.PlayerId == newPlayerId);
+
+            } while (!isUnique); // 如果不唯一，就重新循環一次
+
+            return newPlayerId;
+        }
+
+        /// <summary>
+        /// 從 Email 中提取 2-4 個字母作為 PlayerId 的前綴。
+        /// </summary>
+        private string ExtractPrefixFromEmail(string email)
+        {
+            if (string.IsNullOrWhiteSpace(email) || !email.Contains("@"))
+                return "player"; // 預設值
+
+            string username = email.Split('@')[0];
+            string letters = string.Concat(username.Where(char.IsLetter)).ToLower();
+
+            if (letters.Length < 2)
+            {
+                return "player";
+            }
+
+            int lengthToTake = Math.Min(letters.Length, 4);
+            return letters.Substring(0, lengthToTake);
         }
 
 

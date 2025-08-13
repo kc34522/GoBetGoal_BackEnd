@@ -28,6 +28,7 @@ namespace GoBetGoal_BackEnd.Controllers
                 .OrderBy(a=>a.SortOrder)
                 .Select(a => new AvatarDto
                 {
+                    Id=a.Id,
                     SortOrder = a.SortOrder,
                     AvatarImagePath = a.AvatarImagePath,
                     AvatarPrice = a.AvatarPrice,

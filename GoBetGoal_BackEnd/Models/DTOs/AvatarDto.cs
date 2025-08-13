@@ -6,8 +6,12 @@ using System.Web;
 
 namespace GoBetGoal_BackEnd.Models.DTOs
 {
+    /// <summary>
+    /// 頭像的資料物件
+    /// </summary>
     public class AvatarDto
     {
+        public int Id { get; set; }
         public int SortOrder { get; set; }
         public string AvatarImagePath { get; set; }
         public int AvatarPrice { get; set; }
