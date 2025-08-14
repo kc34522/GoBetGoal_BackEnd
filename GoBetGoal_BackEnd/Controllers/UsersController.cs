@@ -271,7 +271,6 @@ namespace GoBetGoal_BackEnd.Controllers
                     NickName = a.NickName,
                     BagelCount = a.BagelCount,
                     CheatBlanketCount = a.CheatBlanketCount,
-                    ColorMode = a.ColorModeType,
                     CreatedAt = a.CreatedAt,
                     CurrentAvatarId = a.UserAvatars.Where(u => u.IsCurrent).Select(u => (int?)u.AvatarId).FirstOrDefault(),
                     CurrentAvatarUrl = a.UserAvatars.Where(u => u.IsCurrent).Select(u => u.Avatar.AvatarImagePath).FirstOrDefault()

@@ -41,7 +41,7 @@ namespace GoBetGoal_BackEnd.Models
         [Display(Name = "暱稱")]
         public string NickName { get; set; }
 
-        public ColorModeType ColorModeType { get; set; } = ColorModeType.Dark; // 預設DarkMode
+        //public ColorModeType ColorModeType { get; set; } = ColorModeType.Dark; // 預設DarkMode
 
         public int BagelCount { get; set; } = 0;
 

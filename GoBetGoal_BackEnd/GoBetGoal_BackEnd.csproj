@@ -196,7 +196,6 @@
     <Compile Include="Controllers\HomeController.cs" />
     <Compile Include="Controllers\UsersController.cs" />
     <Compile Include="Controllers\ValuesController.cs" />
-    <Compile Include="Enums\ColorModeType.cs" />
     <Compile Include="Enums\ProductType.cs" />
     <Compile Include="Enums\TrialCategory.cs" />
     <Compile Include="Filters\GlobalExceptionFilter.cs" />
@@ -247,6 +246,10 @@
     <Compile Include="Migrations\202508120925072_Fix Avatar Model%281%29.cs" />
     <Compile Include="Migrations\202508120925072_Fix Avatar Model%281%29.Designer.cs">
       <DependentUpon>202508120925072_Fix Avatar Model%281%29.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Migrations\202508140755563_DeleteColorMode.cs" />
+    <Compile Include="Migrations\202508140755563_DeleteColorMode.Designer.cs">
+      <DependentUpon>202508140755563_DeleteColorMode.cs</DependentUpon>
     </Compile>
     <Compile Include="Migrations\Configuration.cs" />
     <Compile Include="Models\Avatar.cs" />
@@ -452,6 +455,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Migrations\202508120925072_Fix Avatar Model%281%29.resx">
       <DependentUpon>202508120925072_Fix Avatar Model%281%29.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\202508140755563_DeleteColorMode.resx">
+      <DependentUpon>202508140755563_DeleteColorMode.cs</DependentUpon>
     </EmbeddedResource>
   </ItemGroup>
   <PropertyGroup>

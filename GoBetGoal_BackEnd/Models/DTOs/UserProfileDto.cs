@@ -17,7 +17,6 @@ namespace GoBetGoal_BackEnd.Models.DTOs
         public string NickName { get; set; }
         public int BagelCount { get; set; }
         public int CheatBlanketCount { get; set; }
-        public ColorModeType ColorMode { get; set; }
         public DateTime CreatedAt { get; set; }
 
         // 我們可以額外加入一個欄位，方便前端直接顯示使用者「目前」的頭像
