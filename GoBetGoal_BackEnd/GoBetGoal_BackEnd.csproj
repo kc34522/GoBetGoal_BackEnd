@@ -258,6 +258,8 @@
     <Compile Include="Models\DTOs\RegisterStepTwoRequestDto.cs" />
     <Compile Include="Models\DTOs\AuthSuccessResponseDto.cs" />
     <Compile Include="Models\DTOs\SuccessResponseDto.cs" />
+    <Compile Include="Models\DTOs\UpdateAvatarRequestDto.cs" />
+    <Compile Include="Models\DTOs\UpdateProfileRequestDto.cs" />
     <Compile Include="Models\DTOs\UserProfileDto.cs" />
     <Compile Include="Models\NotSuitForTag.cs" />
     <Compile Include="Models\SuitForTag.cs" />
