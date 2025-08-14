@@ -28,12 +28,12 @@ namespace GoBetGoal_BackEnd.Controllers
         [AllowAnonymous] // 標示此 API 不需要登入(不需要 JWT)即可存取
         public IHttpActionResult RegisterStepOne(RegisterStepOneRequestDto model)
         {
-            // 驗證傳入的資料是否符合 DTO 的規則 (例如 [Required], [EmailAddress])
-            if (!ModelState.IsValid)
-            {
-                // 如果驗證失敗，回傳 400 Bad Request 並附上錯誤訊息
-                return BadRequest(ModelState);
-            }
+            //// 驗證傳入的資料是否符合 DTO 的規則 (例如 [Required], [EmailAddress])
+            //if (!ModelState.IsValid)
+            //{
+            //    // 如果驗證失敗，回傳 400 Bad Request 並附上錯誤訊息
+            //    return BadRequest(ModelState);
+            //}
 
             // ---新增：將 Email 正規化為小寫-- -
             // ToLowerInvariant() 是用於處理非顯示用的、程式內部比較的標準方法

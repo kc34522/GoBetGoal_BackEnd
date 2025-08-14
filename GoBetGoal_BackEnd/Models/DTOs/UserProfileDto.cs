@@ -11,7 +11,7 @@ namespace GoBetGoal_BackEnd.Models.DTOs
     /// </summary>
     public class UserProfileDto
     {
-        public Guid Id { get; set; }
+        public Guid UserId { get; set; }
         public string Email { get; set; }
         public string PlayerId { get; set; }
         public string NickName { get; set; }

@@ -11,7 +11,7 @@ namespace GoBetGoal_BackEnd.Models.DTOs
     /// </summary>
     public class AvatarDto
     {
-        public int Id { get; set; }
+        public int AvatarId { get; set; }
         public int SortOrder { get; set; }
         public string AvatarImagePath { get; set; }
         public int AvatarPrice { get; set; }

@@ -23,10 +23,10 @@ namespace GoBetGoal_BackEnd.Controllers
         {
             Guid currentUserId = GetCurrentUserId();
 
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
+            //if (!ModelState.IsValid)
+            //{
+            //    return BadRequest(ModelState);
+            //}
 
             bool IsNickNameTaken = _db.Users.Any(u => u.NickName == model.NickName);
             if (IsNickNameTaken)
@@ -73,7 +73,12 @@ namespace GoBetGoal_BackEnd.Controllers
             var userToUpdate = _db.Users.Find(currentUserId);
             if (userToUpdate == null)
             {
-                return NotFound();
+                var error = new ErrorResponseDto
+                {
+                    ErrorCode = "USER_NOT_FOUND",
+                    Message = "指定的使用者不存在。"
+                };
+                return Content(HttpStatusCode.NotFound, error);
             }
 
             userToUpdate.NickName = model.NickName;
@@ -133,7 +138,7 @@ namespace GoBetGoal_BackEnd.Controllers
                 .Where(a => a.Id == currentUserId)
                 .Select(a => new UserProfileDto
                 {
-                    Id = a.Id,
+                    UserId = a.Id,
                     Email = a.Email,
                     PlayerId = a.PlayerId,
                     NickName = a.NickName,
@@ -147,7 +152,12 @@ namespace GoBetGoal_BackEnd.Controllers
 
             if (userProfile == null)
             {
-                return NotFound();
+                var error = new ErrorResponseDto
+                {
+                    ErrorCode = "USER_NOT_FOUND",
+                    Message = "指定的使用者不存在。"
+                };
+                return Content(HttpStatusCode.NotFound, error);
             }
 
             return Ok(userProfile);
