@@ -199,7 +199,6 @@
     <Compile Include="Controllers\UsersController.cs" />
     <Compile Include="Controllers\ValuesController.cs" />
     <Compile Include="Enums\ProductType.cs" />
-    <Compile Include="Enums\TrialCategory.cs" />
     <Compile Include="Filters\GlobalExceptionFilter.cs" />
     <Compile Include="Filters\ValidateModelAttribute.cs" />
     <Compile Include="Global.asax.cs">
@@ -253,6 +252,10 @@
     <Compile Include="Migrations\202508140755563_DeleteColorMode.Designer.cs">
       <DependentUpon>202508140755563_DeleteColorMode.cs</DependentUpon>
     </Compile>
+    <Compile Include="Migrations\202508151153169_AddStageModelAndFixRelatedModels.cs" />
+    <Compile Include="Migrations\202508151153169_AddStageModelAndFixRelatedModels.Designer.cs">
+      <DependentUpon>202508151153169_AddStageModelAndFixRelatedModels.cs</DependentUpon>
+    </Compile>
     <Compile Include="Migrations\Configuration.cs" />
     <Compile Include="Models\Avatar.cs" />
     <Compile Include="Models\Context.cs" />
@@ -266,11 +269,7 @@
     <Compile Include="Models\DTOs\UpdateAvatarRequestDto.cs" />
     <Compile Include="Models\DTOs\UpdateProfileRequestDto.cs" />
     <Compile Include="Models\DTOs\UserProfileDto.cs" />
-    <Compile Include="Models\NotSuitForTag.cs" />
-    <Compile Include="Models\SuitForTag.cs" />
-    <Compile Include="Models\TrialCaution.cs" />
-    <Compile Include="Models\TrialEffection.cs" />
-    <Compile Include="Models\TrialRule.cs" />
+    <Compile Include="Models\Stage.cs" />
     <Compile Include="Models\TrialTemplate.cs" />
     <Compile Include="Models\User.cs" />
     <Compile Include="Models\UserAvatar.cs" />
@@ -463,6 +462,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Migrations\202508140755563_DeleteColorMode.resx">
       <DependentUpon>202508140755563_DeleteColorMode.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\202508151153169_AddStageModelAndFixRelatedModels.resx">
+      <DependentUpon>202508151153169_AddStageModelAndFixRelatedModels.cs</DependentUpon>
     </EmbeddedResource>
   </ItemGroup>
   <PropertyGroup>

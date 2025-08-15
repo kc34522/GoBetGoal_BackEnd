@@ -16,11 +16,7 @@ namespace GoBetGoal_BackEnd.Models
         public DbSet<Avatar> Avatars { get; set; }
         public DbSet<UserAvatar> UserAvatars { get; set; }
         public DbSet<TrialTemplate> TrialTemplates { get; set; }
-        public DbSet<SuitForTag> SuitForTags { get; set; }
-        public DbSet<NotSuitForTag> NotSuitForTags { get; set; }
-        public DbSet<TrialCaution> TrialCautions { get; set; }
-        public DbSet<TrialEffection> TrialEffections { get; set; }
-        public DbSet<TrialRule> TrialRules { get; set; }
+        public DbSet<Stage> Stages { get; set; }
 
     }
 }

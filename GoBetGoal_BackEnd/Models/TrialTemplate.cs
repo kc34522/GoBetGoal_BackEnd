@@ -1,11 +1,5 @@
-﻿using GoBetGoal_BackEnd.Enums;
-using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
-using System.Diagnostics.Contracts;
-using System.Linq;
-using System.Web;
 
 namespace GoBetGoal_BackEnd.Models
 {
@@ -26,10 +20,31 @@ namespace GoBetGoal_BackEnd.Models
         public int TrialFrequency { get; set; }
 
         [Required]
-        public int StageCount { get; set; }
+        [StringLength(50)]
+        public string TrialCategory { get; set; }
 
         [Required]
-        public TrialCategory TrialCategory { get; set; }
+        [StringLength(100)]
+        public string TrialSuitFor { get; set; }
+
+        [Required]
+        [StringLength(100)]
+        public string TrialNoSuitFor { get; set; }
+
+        [Required]
+        [StringLength(200)]
+        public string TrialRule { get; set; }
+
+        [Required]
+        [StringLength(200)]
+        public string TrialCaution { get; set; }
+
+        [Required]
+        [StringLength(200)]
+        public string TrialEffect { get; set; }
+
+        [Required]
+        public int StageCount { get; set; }
 
         [Required]
         public int MaxUser {  get; set; }
@@ -38,28 +53,26 @@ namespace GoBetGoal_BackEnd.Models
         public bool IsAi { get; set; }
 
         [Required]
-        public int TrialPrice { get; set; } = 0;
+        public int TrialTemplatePrice { get; set; }
 
         //public ProductType ProductType { get; set; }
 
         [Required]
         [StringLength(200)]
         public string CardImagePath { get; set; }
+
         [Required]
-        [StringLength(10)]
+        [StringLength(50)]
         public string CardColor { get; set; }
 
-        [Required]
-        public bool IsActive { get; set; } = true;
+        //[Required]
+        //public bool IsActive { get; set; } = true;
 
-        [Column(TypeName = "datetime2")]
-        public DateTime CreatedAt { get; set; }
+        //[Column(TypeName = "datetime2")]
+        //public DateTime CreatedAt { get; set; }
 
-        public virtual ICollection<SuitForTag> SuitForTags { get; set; } = new List<SuitForTag>();
-        public virtual ICollection<NotSuitForTag> NotSuitForTags { get; set; } = new List<NotSuitForTag>();
-        public virtual ICollection<TrialRule> TrialRules { get; set; } = new List<TrialRule>();
-        public virtual ICollection<TrialCaution> TrialCautions { get; set; } = new List<TrialCaution>();
-        public virtual ICollection<TrialEffection> TrialEffections { get; set; } = new List<TrialEffection>();
+        public virtual ICollection<Stage> Stages { get; set; } = new List<Stage>();
+
 
     }
 }
