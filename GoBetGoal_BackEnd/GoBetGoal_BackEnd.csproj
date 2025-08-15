@@ -190,9 +190,11 @@
     <Compile Include="Areas\HelpPage\SampleGeneration\SampleDirection.cs" />
     <Compile Include="Areas\HelpPage\SampleGeneration\TextSample.cs" />
     <Compile Include="Areas\HelpPage\XmlDocumentationProvider.cs" />
+    <Compile Include="Controllers\AITestController.cs" />
     <Compile Include="Controllers\AuthController.cs" />
     <Compile Include="Controllers\AvatarsController.cs" />
     <Compile Include="Controllers\BaseApiController.cs" />
+    <Compile Include="Controllers\ChallengeController.cs" />
     <Compile Include="Controllers\HomeController.cs" />
     <Compile Include="Controllers\UsersController.cs" />
     <Compile Include="Controllers\ValuesController.cs" />
@@ -342,12 +344,15 @@
     <Content Include="Views\Home\Index.cshtml" />
     <Content Include="Views\Shared\Error.cshtml" />
     <Content Include="Views\Shared\_Layout.cshtml" />
-    <Content Include="TokenKey.config" />
+    <Content Include="PrivateSettings.config" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="App_Data\" />
+    <Folder Include="Services\" />
+    <Folder Include="Views\AITest\" />
     <Folder Include="Views\Auth\" />
     <Folder Include="Views\Avatars\" />
+    <Folder Include="Views\Challenge\" />
     <Folder Include="Views\Users\" />
   </ItemGroup>
   <ItemGroup>

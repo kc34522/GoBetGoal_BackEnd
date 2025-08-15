@@ -24,8 +24,8 @@
 
 ===== Secret config files =====
 
-TokenKey.config
 Connect.config
+PrivateSettings.config
 
 
 ===== Source Control bindings (TFS, etc.) =====
