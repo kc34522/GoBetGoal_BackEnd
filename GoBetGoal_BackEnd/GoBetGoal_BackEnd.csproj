@@ -199,6 +199,7 @@
     <Compile Include="Controllers\UsersController.cs" />
     <Compile Include="Controllers\ValuesController.cs" />
     <Compile Include="Enums\ProductType.cs" />
+    <Compile Include="Enums\Status.cs" />
     <Compile Include="Filters\GlobalExceptionFilter.cs" />
     <Compile Include="Filters\ValidateModelAttribute.cs" />
     <Compile Include="Global.asax.cs">
@@ -256,6 +257,22 @@
     <Compile Include="Migrations\202508151153169_AddStageModelAndFixRelatedModels.Designer.cs">
       <DependentUpon>202508151153169_AddStageModelAndFixRelatedModels.cs</DependentUpon>
     </Compile>
+    <Compile Include="Migrations\202508151645207_AddVerificationModeInStageModel.cs" />
+    <Compile Include="Migrations\202508151645207_AddVerificationModeInStageModel.Designer.cs">
+      <DependentUpon>202508151645207_AddVerificationModeInStageModel.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Migrations\202508160638151_AddTrialAndUserStageModels3.cs" />
+    <Compile Include="Migrations\202508160638151_AddTrialAndUserStageModels3.Designer.cs">
+      <DependentUpon>202508160638151_AddTrialAndUserStageModels3.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Migrations\202508160703105_AdjustUserStageImageUploadAtAllowNull.cs" />
+    <Compile Include="Migrations\202508160703105_AdjustUserStageImageUploadAtAllowNull.Designer.cs">
+      <DependentUpon>202508160703105_AdjustUserStageImageUploadAtAllowNull.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Migrations\202508161322541_AdjustUserStageModelStatus.cs" />
+    <Compile Include="Migrations\202508161322541_AdjustUserStageModelStatus.Designer.cs">
+      <DependentUpon>202508161322541_AdjustUserStageModelStatus.cs</DependentUpon>
+    </Compile>
     <Compile Include="Migrations\Configuration.cs" />
     <Compile Include="Models\Avatar.cs" />
     <Compile Include="Models\Context.cs" />
@@ -270,12 +287,17 @@
     <Compile Include="Models\DTOs\UpdateProfileRequestDto.cs" />
     <Compile Include="Models\DTOs\UserProfileDto.cs" />
     <Compile Include="Models\Stage.cs" />
+    <Compile Include="Models\Trial.cs" />
     <Compile Include="Models\TrialTemplate.cs" />
     <Compile Include="Models\User.cs" />
     <Compile Include="Models\UserAvatar.cs" />
+    <Compile Include="Models\UserStage.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Security\JwtAuthFilter.cs" />
     <Compile Include="Security\JwtAuthUtility.cs" />
+    <Compile Include="Services\ChallengeDbService.cs" />
+    <Compile Include="Services\ChallengeHelper.cs" />
+    <Compile Include="Services\OpenAIHttpClientService.cs" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="Areas\HelpPage\HelpPage.css" />
@@ -347,7 +369,6 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="App_Data\" />
-    <Folder Include="Services\" />
     <Folder Include="Views\AITest\" />
     <Folder Include="Views\Auth\" />
     <Folder Include="Views\Avatars\" />
@@ -465,6 +486,18 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Migrations\202508151153169_AddStageModelAndFixRelatedModels.resx">
       <DependentUpon>202508151153169_AddStageModelAndFixRelatedModels.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\202508151645207_AddVerificationModeInStageModel.resx">
+      <DependentUpon>202508151645207_AddVerificationModeInStageModel.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\202508160638151_AddTrialAndUserStageModels3.resx">
+      <DependentUpon>202508160638151_AddTrialAndUserStageModels3.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\202508160703105_AdjustUserStageImageUploadAtAllowNull.resx">
+      <DependentUpon>202508160703105_AdjustUserStageImageUploadAtAllowNull.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\202508161322541_AdjustUserStageModelStatus.resx">
+      <DependentUpon>202508161322541_AdjustUserStageModelStatus.cs</DependentUpon>
     </EmbeddedResource>
   </ItemGroup>
   <PropertyGroup>

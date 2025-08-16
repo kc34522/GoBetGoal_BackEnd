@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace GoBetGoal_BackEnd.Models
@@ -11,11 +12,15 @@ namespace GoBetGoal_BackEnd.Models
         [Required]
         public int StageIndex { get; set; }
 
-        [StringLength(200)]
+        //[Required]
+        [StringLength(50)]
+        public string VerificationMode { get; set; }
+
+        [StringLength(500)]
         public string StageSampleImagePath { get; set; }
         
         [Required]
-        [StringLength(200)]
+        [StringLength(300)]
         public string StageDescription { get; set; }
 
         //[Required]
@@ -40,8 +45,6 @@ namespace GoBetGoal_BackEnd.Models
         //public DateTime CreatedAt { get; set; } = DateTime.Now;
 
 
-
-
-        //public virtual ICollection<UserStage> UserStages { get; set; } = new List<UserStage>();
+        public virtual ICollection<UserStage> UserStages { get; set; } = new List<UserStage>();
     }
 }

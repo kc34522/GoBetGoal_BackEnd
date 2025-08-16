@@ -1,56 +1,76 @@
 ﻿// 1. 確保檔案頂部有這些 using 指示詞
+using GoBetGoal_BackEnd.Controllers;
+using GoBetGoal_BackEnd.Models;
+using GoBetGoal_BackEnd.Models.DTOs;
+using GoBetGoal_BackEnd.Services;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Configuration;
+using System.Data.Entity;
 using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Threading.Tasks;
 using System.Web.Http;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 
-// 2. 為了簡單，我們將所有需要的模型都定義在 Controller 檔案的外部
-#region Data Models (所有需要的資料模型)
 
-// --- API 請求與回應的模型 ---
+// --- 2. 為了簡單且自給自足，我們將所有需要的 DTO 模型都定義在這裡 ---
+// 這些都不需要在資料庫建表
+#region API Data Models (DTOs)
+
+/// <summary>
+/// 前端提交關卡挑戰時，傳送給後端的資料格式
+/// </summary>
 public class ChallengeSubmissionRequest
 {
-    public int StageId { get; set; }
+    public int TrialId { get; set; }
+    public int StageIndex { get; set; }
     public List<string> ImageUrls { get; set; }
 }
 
+/// <summary>
+/// 後端完成審核後，回傳給前端的詳細結果
+/// </summary>
 public class ChallengeSubmissionResponse
 {
     public bool OverallResult { get; set; }
     public string OverallMessage { get; set; }
-    public List<ImageResult> ImageResults { get; set; }
+    public List<ImageResult> ImageResults { get; set; } = new List<ImageResult>();
+
+    public int ChanceRemain { get; set; }// 每次審核後-1
 }
 
+/// <summary>
+/// 單張圖片的審核結果
+/// </summary>
 public class ImageResult
 {
     public string ImageUrl { get; set; }
+    public bool IsSafe { get; set; }
+
     public bool IsCompliant { get; set; }
     public string Reason { get; set; }
 }
 
-// --- 邏輯層/資料庫的模型 ---
-public class StageInfo
-{
-    public int StageId { get; set; }
-    public List<string> MealRules { get; set; }
-    public List<string> GeneralRules { get; set; }
-    public string VerificationMode { get; set; }
-}
-
-// --- 解析 AI 回應的專用模型 ---
+/// <summary>
+/// 用於解析 AI 回應的專用模型
+/// </summary>
 public class AIVerificationResult
 {
-    [JsonProperty("is_compliant")]
-    public bool IsCompliant { get; set; }
+    [JsonProperty("safety_rating")]
+    public string SafetyRating { get; set; }
+
+    [JsonProperty("compliance_rating")]
+    public string ComplianceRating { get; set; }
+
     [JsonProperty("reason")]
     public string Reason { get; set; }
+
+    [JsonProperty("confidence")]
+    public double? Confidence { get; set; } // 新增：AI 置信度
 }
 
 public class AICollectiveDetectionResult
@@ -60,6 +80,14 @@ public class AICollectiveDetectionResult
     [JsonProperty("violated_rules")]
     public List<string> ViolatedRules { get; set; }
 }
+// 圖片+文字用
+//public class VerificationRequest
+//{
+//    public List<string> ImageUrls { get; set; } = new List<string>();
+//    public string Text { get; set; }  // 可選，用於文字審核
+//}
+
+
 
 // --- OpenAI API 請求的模型 ---
 public class OpenAIChatRequest { [JsonProperty("model")] public string Model { get; set; } [JsonProperty("messages")] public List<RequestMessage> Messages { get; set; } [JsonProperty("max_tokens")] public int MaxTokens { get; set; } }
@@ -74,48 +102,158 @@ public class ResponseMessage { [JsonProperty("role")] public string Role { get; 
 
 
 // 3. 主要的 Controller 類別
-[RoutePrefix("api/challenge")]
-public class ChallengeController : ApiController
+public class ChallengeController : BaseApiController
 {
-    [HttpPost, Route("submit"), AllowAnonymous]
+    private readonly ChallengeDbService _dbService = new ChallengeDbService();
+
+
+    [HttpPost, Route("api/challenge/submit"), AllowAnonymous]
     public async Task<IHttpActionResult> SubmitChallengeStage([FromBody] ChallengeSubmissionRequest request)
     {
+
         if (request == null || request.ImageUrls == null || !request.ImageUrls.Any())
-            return BadRequest("缺少必要參數");
+            return BadRequest("請求格式錯誤或未提供圖片。");
 
-        var stageInfo = GetMockStageInfo(request.StageId);
-        if (stageInfo == null) return NotFound();
+        Guid currentUserId = GetCurrentUserId();
 
-        IVerifier verifier = (stageInfo.VerificationMode == "Collective")
-            ? (IVerifier)new CollectiveVerifier()
-            : new PerImageVerifier();
+        using (var _db = new Context())
+        {
+            var userStage = await _db.UserStages
+            .Include("Stage.TrialTemplate").
+            FirstOrDefaultAsync(us => us.UserId == currentUserId &&
+            us.TrialId == request.TrialId &&
+            us.Stage.StageIndex == request.StageIndex);
 
-        var result = await verifier.VerifyAsync(request, stageInfo);
-        return Ok(result);
+            if (userStage == null)
+            {
+                return NotFound();
+            }
+
+            if(userStage.ChanceRemain <= 0)
+            {
+                return BadRequest("您今日的 AI 審核次數已用完。");
+            }
+
+            var stageRules = userStage.Stage.StageDescription;
+            var trialRules = userStage.Stage.TrialTemplate.TrialRule;
+
+            if (stageRules == null || trialRules==null)
+            {
+                return InternalServerError(new Exception("關卡規則資料不完整。"));
+            }
+
+            var stageRulesJson = JsonConvert.DeserializeObject<List<string>>(stageRules);
+            var trialRulesJson = JsonConvert.DeserializeObject<List<string>>(trialRules);
+
+            IVerifier verifier = (userStage.Stage.VerificationMode == "Collective")
+                ? (IVerifier)new CollectiveVerifier(userStage.Stage)
+                : new PerImageVerifier(userStage.Stage);
+
+            // --- D. 執行審核 ---
+            // 將審核任務委派給選擇好的審核器去執行。
+            var result = await verifier.VerifyAsync(request.ImageUrls);
+
+            // --- 7. 處理審核結果 (更新 userStage 物件) ---
+            userStage.ChanceRemain--; // 無論成敗，都扣除一次機會
+
+            if (result.OverallResult)
+            {
+                userStage.UploadImagePath = JsonConvert.SerializeObject(request.ImageUrls);
+                userStage.ImageUploadAt = DateTime.Now;
+                userStage.Status = (GoBetGoal_BackEnd.Enums.Status)2;
+            }
+
+            _db.Entry(userStage).State=EntityState.Modified;
+            await _db.SaveChangesAsync();
+
+            return Ok(result);
+        }
+        // --- E. 如果所有圖片都失敗，嘗試備用審核策略 ---
+        //if (!result.OverallResult && result.ImageResults.All(r => !r.IsSafe))
+        //{
+        //    var fallbackResult = await TryFallbackVerification(request.ImageUrls, stage);
+        //    if (fallbackResult.OverallResult)
+        //    {
+        //        result = fallbackResult;
+        //        result.OverallMessage += " (使用備用審核通過)";
+        //    }
+        //}
     }
 
-    #region Verifier Strategy Pattern, Helpers, and AI Service
+    #region Verifier Strategy Pattern & Helpers (審核策略模式與所有輔助方法的完整實作)
 
-    // --- 策略模式 ---
-    private interface IVerifier { Task<ChallengeSubmissionResponse> VerifyAsync(ChallengeSubmissionRequest request, StageInfo stageInfo); }
-
-    private class PerImageVerifier : IVerifier
+    /// <summary>
+    /// 定義所有審核器都必須遵守的合約（介面）
+    /// </summary>
+    public interface IVerifier
     {
-        public async Task<ChallengeSubmissionResponse> VerifyAsync(ChallengeSubmissionRequest request, StageInfo stageInfo)
+        Task<ChallengeSubmissionResponse> VerifyAsync(List<string> imageUrls);
+
+        // 文字+圖片審核用
+        //Task<ChallengeSubmissionResponse> VerifyAsync(VerificationRequest request);
+
+    }
+
+    /// <summary>
+    /// 「逐張獨立審核」的專科醫生
+    /// </summary>
+    public class PerImageVerifier : IVerifier
+    {
+        private readonly Stage _stage; // 儲存從資料庫撈出來的、包含所有規則的關卡資訊
+
+        public PerImageVerifier(Stage stage)
         {
-            var response = new ChallengeSubmissionResponse { ImageResults = new List<ImageResult>() };
+            _stage = stage;
+        }
+
+        public async Task<ChallengeSubmissionResponse> VerifyAsync(List<string> imageUrls)
+        {
+            var response = new ChallengeSubmissionResponse();
+
+            // ... (數量檢查的防呆機制) ...
+
             bool isStagePassed = true;
 
-            for (int i = 0; i < request.ImageUrls.Count; i++)
-            {
-                var imageUrl = request.ImageUrls[i];
-                string ruleForThisImage = (stageInfo.MealRules.Count > i) ? stageInfo.MealRules[i] : stageInfo.MealRules.FirstOrDefault() ?? "";
-                string prompt = BuildPerImagePrompt(ruleForThisImage, stageInfo.GeneralRules);
-                string rawAiResponse = await OpenAIHttpClientService.AnalyzeImageAsync(imageUrl, "gpt-4o-mini", prompt);
-                var result = ParseAIResponse<AIVerificationResult>(rawAiResponse);
+            // 反序列化從資料庫來的 JSON 字串規則
+            var mealRules = JsonConvert.DeserializeObject<List<string>>(_stage.StageDescription);
+            var generalRules = JsonConvert.DeserializeObject<List<string>>(_stage.TrialTemplate.TrialRule);
 
-                response.ImageResults.Add(new ImageResult { ImageUrl = imageUrl, IsCompliant = result.IsCompliant, Reason = result.Reason });
-                if (!result.IsCompliant) isStagePassed = false;
+            if (mealRules.Count > 1 && imageUrls.Count != mealRules.Count)
+            {
+                response.OverallResult = false;
+                response.OverallMessage = $"驗證失敗：此關卡需要 {mealRules.Count} 張照片，但您提供了 {imageUrls.Count} 張。";
+                return response;
+            }
+
+            // PerImage 模式：對每一張圖獨立進行審核
+            for (int i = 0; i < imageUrls.Count; i++)
+            {
+                var imageUrl = imageUrls[i];
+                // 如果規則數與圖片數對應，則按順序取規則；否則，所有圖片都使用第一條規則。
+                string ruleForThisImage = (mealRules.Count > i) ? mealRules[i] : mealRules.FirstOrDefault() ?? "";
+
+                string prompt = ChallengeHelper.BuildPerImagePrompt(ruleForThisImage, generalRules);
+
+                // 呼叫 OpenAI 服務，建議使用 gpt-4o 以獲得更精準的邏輯判斷
+                string rawAiResponse = await OpenAIHttpClientService.AnalyzeImageAsync(imageUrl, "gpt-4o", prompt);
+                var result = ChallengeHelper.ParseAIResponse<AIVerificationResult>(rawAiResponse);
+
+                // --- [新的、更穩健的後端判斷邏輯] ---
+                bool isSafe = result.SafetyRating?.Equals("safe", StringComparison.OrdinalIgnoreCase) ?? false;
+                bool isCompliant = result.ComplianceRating?.Equals("compliant", StringComparison.OrdinalIgnoreCase) ?? false;
+
+                // 優先檢查安全性
+                if (!isSafe)
+                {
+                    isStagePassed = false;
+                    response.ImageResults.Add(new ImageResult { ImageUrl = imageUrl, IsSafe = false, IsCompliant = false, Reason = "圖片內容不符合社群安全規範。" });
+                }
+                else
+                {
+                    // 安全才檢查任務符合性
+                    response.ImageResults.Add(new ImageResult { ImageUrl = imageUrl, IsSafe = true, IsCompliant = isCompliant, Reason = result.Reason });
+                    if (!isCompliant) isStagePassed = false;
+                }
             }
             response.OverallResult = isStagePassed;
             response.OverallMessage = isStagePassed ? "所有圖片均通過審核！" : "有圖片未通過審核，挑戰失敗。";
@@ -123,23 +261,37 @@ public class ChallengeController : ApiController
         }
     }
 
-    private class CollectiveVerifier : IVerifier
+    /// <summary>
+    /// 「多圖綜合審核」的專科醫生。
+    /// 適用於：哈佛 22-28 天自由餐等特殊任務。
+    /// </summary>
+    public class CollectiveVerifier : IVerifier
     {
-        public async Task<ChallengeSubmissionResponse> VerifyAsync(ChallengeSubmissionRequest request, StageInfo stageInfo)
+        private readonly Stage _stage;
+
+        public CollectiveVerifier(Stage stage)
+        {
+            _stage = stage;
+        }
+
+        public async Task<ChallengeSubmissionResponse> VerifyAsync(List<string> imageUrls)
         {
             var response = new ChallengeSubmissionResponse { ImageResults = new List<ImageResult>() };
             var allDetectedFoods = new List<string>();
             var allViolations = new List<string>();
             bool violationsFound = false;
-            string mainRule = stageInfo.MealRules.FirstOrDefault() ?? "";
 
-            foreach (var imageUrl in request.ImageUrls)
+            string mainRule = JsonConvert.DeserializeObject<List<string>>(_stage.StageDescription).FirstOrDefault() ?? "";
+            var generalRules = JsonConvert.DeserializeObject<List<string>>(_stage.TrialTemplate.TrialRule);
+
+            foreach (var imageUrl in imageUrls)
             {
-                string prompt = BuildCollectivePrompt(mainRule, stageInfo.GeneralRules);
+                string prompt = ChallengeHelper.BuildCollectivePrompt(mainRule, generalRules);
                 string rawAiResponse = await OpenAIHttpClientService.AnalyzeImageAsync(imageUrl, "gpt-4o", prompt);
-                var result = ParseAIResponse<AICollectiveDetectionResult>(rawAiResponse);
+                var result = ChallengeHelper.ParseAIResponse<AICollectiveDetectionResult>(rawAiResponse);
 
                 if (result.DetectedMatchingFoods != null) allDetectedFoods.AddRange(result.DetectedMatchingFoods);
+
                 bool hasViolation = result.ViolatedRules != null && result.ViolatedRules.Any();
                 if (hasViolation) { violationsFound = true; allViolations.AddRange(result.ViolatedRules); }
 
@@ -150,91 +302,52 @@ public class ChallengeController : ApiController
                     Reason = hasViolation ? "違反規則：" + string.Join(", ", result.ViolatedRules) : "偵測到的合規食物：" + string.Join(", ", result.DetectedMatchingFoods)
                 });
             }
-            bool allItemsMet = CheckFreeMealCompliance(allDetectedFoods, mainRule);
+
+            bool allItemsMet = ChallengeHelper.CheckFreeMealCompliance(allDetectedFoods, mainRule);
             response.OverallResult = allItemsMet && !violationsFound;
             response.OverallMessage = response.OverallResult ? "恭喜！您已完成今日所需的所有餐點！" : "審核失敗，請確認是否缺少必要食物或違反了某些規則。";
             return response;
         }
     }
-
-    // --- AI 服務 (直接放在這裡，最簡單) ---
-    private static class OpenAIHttpClientService
-    {
-        private static readonly HttpClient _httpClient = new HttpClient();
-        private const string OpenAI_Api_Url = "https://api.openai.com/v1/chat/completions";
-
-        public static Task<string> AnalyzeImageAsync(string imageUrl, string model, string prompt)
-        {
-            return AnalyzeImagesInternal(new List<string> { imageUrl }, model, prompt);
-        }
-
-        private static async Task<string> AnalyzeImagesInternal(List<string> imageUrls, string model, string prompt)
-        {
-            var apiKey = ConfigurationManager.AppSettings["OpenAI_ApiKey"];
-            if (string.IsNullOrEmpty(apiKey) || apiKey.StartsWith("sk-YOUR")) throw new ArgumentException("Web.config 中未設定 OpenAI_ApiKey。");
-
-            var contentList = new List<RequestContent> { new RequestContent { Type = "text", Text = prompt } };
-            imageUrls.ForEach(url => contentList.Add(new RequestContent { Type = "image_url", ImageUrl = new RequestImageUrl { Url = url } }));
-
-            var requestBody = new OpenAIChatRequest { Model = model, MaxTokens = 500, Messages = new List<RequestMessage> { new RequestMessage { Role = "user", Content = contentList } } };
-
-            try
-            {
-                var jsonContent = JsonConvert.SerializeObject(requestBody);
-                var httpContent = new StringContent(jsonContent, Encoding.UTF8, "application/json");
-                using (var httpRequestMessage = new HttpRequestMessage(HttpMethod.Post, OpenAI_Api_Url))
-                {
-                    httpRequestMessage.Headers.Authorization = new AuthenticationHeaderValue("Bearer", apiKey);
-                    httpRequestMessage.Content = httpContent;
-                    var response = await _httpClient.SendAsync(httpRequestMessage);
-                    var jsonResponse = await response.Content.ReadAsStringAsync();
-                    if (!response.IsSuccessStatusCode) return JsonConvert.SerializeObject(new { is_compliant = false, reason = $"API 請求失敗: {response.StatusCode}" });
-                    var openAIResponse = JsonConvert.DeserializeObject<OpenAIChatResponse>(jsonResponse);
-                    var message = openAIResponse?.Choices?.FirstOrDefault()?.Message;
-                    if (message == null) return "{\"is_compliant\": false, \"reason\": \"AI 未提供有效回應。\"}";
-                    return message.Content.ToString();
-                }
-            }
-            catch (Exception ex) { return $"{{\"is_compliant\": false, \"reason\": \"程式執行異常：{ex.Message}\"}}"; }
-        }
-    }
-
-    // --- 所有輔助方法 ---
-    private static StageInfo GetMockStageInfo(int stageId)
-    {
-        switch (stageId)
-        {
-            case 1: return new StageInfo { StageId = 1, VerificationMode = "PerImage", MealRules = new List<string> { "半顆葡萄柚或橘子＋1或2顆水煮蛋", "水果吃到飽", "煎或水煮雞胸肉" }, GeneralRules = new List<string> { "不可替換食材", "水煮蔬菜不可加油" } };
-            case 22: return new StageInfo { StageId = 22, VerificationMode = "Collective", MealRules = new List<string> { "自由餐：250g雞胸肉＋3顆番茄" }, GeneralRules = new List<string> { "不可替換食材", "水煮蔬菜不可加油" } };
-            default: return null;
-        }
-    }
-
-    private static string BuildPerImagePrompt(string rule, List<string> generalRules)
-    {
-        return $"You are a strict judge for a health challenge. Analyze this single image. The image MUST comply with this specific rule: '{rule}'. You must ALSO enforce these general guidelines: {string.Join(", ", generalRules)}. Respond ONLY with a JSON object in Traditional Chinese in the format: {{\"is_compliant\": boolean, \"reason\": \"A brief explanation.\"}}";
-    }
-
-    private static string BuildCollectivePrompt(string rule, List<string> generalRules)
-    {
-        return $"You are a food detective. The complete daily requirement is: '{rule}'. Analyze THIS SINGLE IMAGE and identify ONLY the food items that are part of the daily requirement list. Also, report any violations of these general guidelines: {string.Join(", ", generalRules)}. Respond ONLY with a JSON object in Traditional Chinese: {{\"detected_matching_foods\": [\"food1\"], \"violated_rules\": [\"violation reason\"]}}";
-    }
-
-    private static T ParseAIResponse<T>(string rawResponse) where T : class, new()
-    {
-        try
-        {
-            if (string.IsNullOrWhiteSpace(rawResponse)) return new T();
-            var cleanJson = rawResponse.Trim().Trim('`').Replace("json\n", "").Trim();
-            return JsonConvert.DeserializeObject<T>(cleanJson) ?? new T();
-        }
-        catch { return new T(); }
-    }
-
-    private static bool CheckFreeMealCompliance(List<string> detectedFoods, string rule)
-    {
-        // 這是簡化的檢查邏輯，您可以擴充它
-        return rule.Contains("雞胸肉") && detectedFoods.Any(f => f.Contains("雞胸肉"));
-    }
     #endregion
+
+    //public class AiVerifier : IVerifier
+    //{
+    //    public async Task<ChallengeSubmissionResponse> VerifyAsync(VerificationRequest request)
+    //    {
+    //        // 呼叫 AI API 做圖片 + 文字審核
+    //        return new ChallengeSubmissionResponse
+    //        {
+    //            OverallResult = true,
+    //            OverallMessage = 
+    //        };
+    //    }
+    //}
+
+
+    // 模擬人工審核：假設所有圖片都合規
+    //public class ManualVerifier : IVerifier
+    //{
+    //    // 不需要非同步 → 移除 async
+    //    public Task<ChallengeSubmissionResponse> VerifyAsync(List<string> imageUrls)
+    //    {
+    //        // 模擬人工審核：假設所有圖片都合規
+    //        var imageResults = imageUrls.Select(url => new ImageResult
+    //        {
+    //            ImageUrl = url,
+    //            IsSafe = true,
+    //            IsCompliant = true,
+    //            Reason = "人工審核通過"
+    //        }).ToList();
+
+    //        var response = new ChallengeSubmissionResponse
+    //        {
+    //            OverallResult = true,
+    //            OverallMessage = "所有圖片皆通過人工審核",
+    //            ImageResults = imageResults
+    //        };
+
+    //        return Task.FromResult(response);
+    //    }
+    //}
 }

@@ -55,6 +55,10 @@ namespace GoBetGoal_BackEnd.Models
         [Display(Name = "更新時間")]
         public DateTime? UpdatedAt { get; set; }
 
-        public virtual ICollection<UserAvatar> UserAvatars { get; set; }
+        public virtual ICollection<UserAvatar> UserAvatars { get; set; }= new List<UserAvatar>();
+        public virtual ICollection<Trial> Trials { get; set; }=new List<Trial>();
+        public virtual ICollection<UserStage> UserStages { get; set; } = new List<UserStage>();
+
+
     }
 }
